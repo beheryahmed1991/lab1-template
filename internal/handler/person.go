@@ -16,6 +16,8 @@ type personService interface {
 	Create(context.Context, model.PersonRequest) (int64, error)
 	GetByID(context.Context, int64) (*model.Person, error)
 	GetAll(context.Context) ([]model.Person, error)
+	Update(context.Context, int64, model.PersonRequest) (*model.Person, error)
+	Delete(context.Context, int64) error
 }
 
 type PersonHandler struct {
@@ -80,4 +82,47 @@ func (h *PersonHandler) GetAll(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, persons)
+}
+
+func (h *PersonHandler) Update(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	var req model.PersonRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	person, err := h.service.Update(c.Request.Context(), id, req)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"message": "person not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "internal server error"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, person)
+}
+
+func (h *PersonHandler) Delete(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	if err := h.service.Delete(c.Request.Context(), id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"message": "person not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "internal server error"})
+		}
+		return
+	}
+	c.Status(http.StatusNoContent)
 }

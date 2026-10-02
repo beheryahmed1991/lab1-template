@@ -34,6 +34,8 @@ func main() {
 		api.GET("/persons", h.GetAll)
 		api.GET("/persons/:id", h.GetByID)
 		api.POST("/persons", h.Create)
+		api.PATCH("/persons/:id", h.Update)
+		api.DELETE("/persons/:id", h.Delete)
 	}
 
 	if err := router.Run(":8080"); err != nil {

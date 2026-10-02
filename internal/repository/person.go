@@ -102,7 +102,8 @@ func (r *PersonRepository) Update(ctx context.Context, id int64, person model.Pe
 	err := r.db.QueryRow(
 		ctx,
 		`UPDATE persons
-		 SET name = $1, age = $2, address = $3, work = $4
+		 SET name = $1, age = COALESCE($2, age),
+		     address = COALESCE($3, address), work = COALESCE($4, work)
 		 WHERE id = $5
 		 RETURNING id, name, age, address, work`,
 		person.Name,
