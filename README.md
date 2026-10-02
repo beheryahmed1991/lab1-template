@@ -1,5 +1,35 @@
 # Лабораторная работа #1
 
+## Local run
+
+Start Docker Desktop, then run the Go app and PostgreSQL together:
+
+```powershell
+docker compose up -d --build
+docker compose logs -f app
+```
+
+The API is available at `http://localhost:8080/api/v1/persons`.
+Stop the containers with `docker compose down`; database data remains in the volume.
+
+To run Go locally instead, start only PostgreSQL:
+
+```powershell
+docker compose up -d postgres
+go run ./cmd/app
+```
+
+The app reads `DATABASE_URL` and `PORT` from the environment, defaulting to
+`postgres://program:test@localhost:5432/persons` and `8080` for local development.
+Compose sets the database host to `postgres` for the app container.
+Stop any existing app on port 8080 before switching between these modes.
+
+Run handler unit tests without PostgreSQL:
+
+```powershell
+go test ./...
+```
+
 ![GitHub Classroom Workflow](../../workflows/GitHub%20Classroom%20Workflow/badge.svg?branch=master)
 
 ## Continuous Integration & Continuous Delivery
