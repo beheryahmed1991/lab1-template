@@ -18,3 +18,7 @@ func (s *PersonService) Create(ctx context.Context, person model.PersonRequest) 
 func (s *PersonService) GetByID(ctx context.Context, id int64) (*model.Person, error) {
 	return s.repo.GetByID(ctx, id)
 }
+
+func (s *PersonService) GetAll(ctx context.Context) ([]model.Person, error) {
+	return s.repo.GetAll(ctx)
+}
