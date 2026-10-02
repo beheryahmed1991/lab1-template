@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"time"
 
 	"github.com/bmstu-rsoi/lab1-template.git/internal/handler"
 	"github.com/bmstu-rsoi/lab1-template.git/internal/repository"
@@ -13,15 +15,28 @@ import (
 
 func main() {
 	ctx := context.Background()
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "postgres://program:test@localhost:5432/persons"
+	}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
 	db, err := pgxpool.New(
 		ctx,
-		"postgres://program:test@localhost:5432/persons",
+		databaseURL,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	pingCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	if err := db.Ping(pingCtx); err != nil {
+		log.Fatal("database connection failed: ", err)
+	}
 
 	repo := repository.NewPersonRepository(db)
 	svc := service.NewPersonService(repo)
@@ -38,7 +53,7 @@ func main() {
 		api.DELETE("/persons/:id", h.Delete)
 	}
 
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(":" + port); err != nil {
 		log.Fatal(err)
 	}
 }
