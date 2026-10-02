@@ -11,6 +11,10 @@ type PersonService struct {
 	repo *repository.PersonRepository
 }
 
+func NewPersonService(repo *repository.PersonRepository) *PersonService {
+	return &PersonService{repo: repo}
+}
+
 func (s *PersonService) Create(ctx context.Context, person model.PersonRequest) (int64, error) {
 	return s.repo.Create(ctx, person)
 }

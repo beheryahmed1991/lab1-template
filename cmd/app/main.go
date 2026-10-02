@@ -6,6 +6,7 @@ import (
 
 	"github.com/bmstu-rsoi/lab1-template.git/internal/handler"
 	"github.com/bmstu-rsoi/lab1-template.git/internal/repository"
+	"github.com/bmstu-rsoi/lab1-template.git/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
