@@ -97,27 +97,24 @@ func (r *PersonRepository) GetAll(ctx context.Context) ([]model.Person, error) {
 	return persons, nil
 }
 
-func (r *PersonRepository) Update(ctx context.Context, id int64, person model.PersonRequest) error {
-	result, err := r.db.Exec(
+func (r *PersonRepository) Update(ctx context.Context, id int64, person model.PersonRequest) (*model.Person, error) {
+	var updated model.Person
+	err := r.db.QueryRow(
 		ctx,
 		`UPDATE persons
 		 SET name = $1, age = $2, address = $3, work = $4
-		 WHERE id = $5`,
+		 WHERE id = $5
+		 RETURNING id, name, age, address, work`,
 		person.Name,
 		person.Age,
 		person.Address,
 		person.Work,
 		id,
-	)
+	).Scan(&updated.ID, &updated.Name, &updated.Age, &updated.Address, &updated.Work)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	if result.RowsAffected() == 0 {
-		return pgx.ErrNoRows
-	}
-
-	return nil
+	return &updated, nil
 }
 
 func (r *PersonRepository) Delete(ctx context.Context, id int64) error {
