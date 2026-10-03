@@ -5,12 +5,15 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  deployment_status:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   test:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -33,3 +36,51 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t lab1-ci-cd .
+
+  integration:
+    name: Newman tests on Railway
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' &&
+       github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'upbeat-delight / production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: railway-newman
+      cancel-in-progress: false
+    steps:
+      - name: Checkout tested revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.deployment.sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Newman
+        run: npm install --global newman@6
+
+      - name: Wait for API readiness
+        run: >-
+          curl --fail --silent --show-error --output /dev/null
+          --connect-timeout 10 --max-time 20
+          --retry 12 --retry-delay 5 --retry-all-errors
+          https://lab1-template-production-6bea.up.railway.app/api/v1/persons
+
+      - name: Run Postman collection
+        run: >-
+          newman run "postman/[inst] Lab1.postman_collection.json"
+          --environment "postman/[inst][railway] Lab1.postman_environment.json"
+          --delay-request 100 --timeout-request 30000
+          --reporters cli,junit --reporter-junit-export newman/results.xml
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: railway-newman-results
+          path: newman/results.xml
+          if-no-files-found: ignore

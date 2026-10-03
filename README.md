@@ -2,6 +2,20 @@
 
 ## Local run
 
+The deployed API is at https://lab1-template-production-6bea.up.railway.app/api/v1/persons.
+The `CI` workflow runs unit tests and builds on pushes and pull requests to `master`.
+It runs Newman against Railway after a successful deployment to `upbeat-delight / production`, or manually
+via GitHub Actions → CI → Run workflow. The JUnit report is saved as an artifact.
+
+Run the integration collection locally against Railway:
+
+```powershell
+npx.cmd --yes --package=newman@6 newman run "postman/[inst] Lab1.postman_collection.json" -e "postman/[inst][railway] Lab1.postman_environment.json"
+```
+
+The collection creates a test person, reads and updates it, then deletes it.
+The separate Classroom workflow still uses the original Heroku environment and grading setup.
+
 Start Docker Desktop, then run the Go app and PostgreSQL together:
 
 ```powershell
