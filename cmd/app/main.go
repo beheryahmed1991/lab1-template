@@ -38,6 +38,19 @@ func main() {
 		log.Fatal("database connection failed: ", err)
 	}
 
+	schemaCtx, cancelSchema := context.WithTimeout(ctx, 30*time.Second)
+	defer cancelSchema()
+	_, err = db.Exec(schemaCtx, `CREATE TABLE IF NOT EXISTS persons (
+		id BIGSERIAL PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		age INTEGER,
+		address VARCHAR(255),
+		work VARCHAR(255)
+	)`)
+	if err != nil {
+		log.Fatal("database initialization failed: ", err)
+	}
+
 	repo := repository.NewPersonRepository(db)
 	svc := service.NewPersonService(repo)
 	h := handler.NewPersonHandler(svc)
